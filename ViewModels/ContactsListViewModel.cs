@@ -11,7 +11,7 @@ using System.Windows.Input;
 namespace PhoneBook.VIewModels
 {
     //связывает view и model
-    public class MainViewModel : ObservableObject
+    public class ContactsListViewModel : ObservableObject
     {
         //коллекция контактов
         public ObservableCollection<Contact> Contacts { get; }
@@ -19,6 +19,7 @@ namespace PhoneBook.VIewModels
         private string _phone = string.Empty; //приватное поле для временного вводимого телефона
 		private Contact? _selectedContact; //приватное поле для хранения выбранного в датагрид контакта
         private readonly IDialogService _dialogService;
+        private readonly INavigationService _navigation;
 
         //свойство для привязки к текстбокс имени
         public string Name
@@ -44,15 +45,17 @@ namespace PhoneBook.VIewModels
         //команды
         public ICommand AddCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand EditCommand { get; }
 
 		//конструктор инициализирует коллекцию и команды
 		// Constructor Injection: DI-контейнер автоматически
 		// передаёт реализацию IDialogService
-		public MainViewModel(IDialogService dialogService)
+		public ContactsListViewModel(IDialogService dialogService, INavigationService navigation)
         {
             Contacts = new ObservableCollection<Contact>();
             AddCommand = new RelayCommand(AddContact, () => CanAddContact()); //создание команды добавления с методом выполнения и проверкой возможности
             DeleteCommand = new RelayCommand(DeleteContact, () => CanDeleteContact());
+            _navigation = navigation;
             _dialogService = dialogService;
         }
 
@@ -101,6 +104,12 @@ namespace PhoneBook.VIewModels
             if (SelectedContact != null)
                 return true;
             return false;
+        }
+
+        //метод редактирования контакта
+        private void EditContact()
+        {
+
         }
 
     }
