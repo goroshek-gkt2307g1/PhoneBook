@@ -1,4 +1,5 @@
 ﻿using PhoneBook.Models;
+using PhoneBook.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,6 +18,7 @@ namespace PhoneBook.VIewModels
         private string _name = string.Empty; //приватное поле для временного вводимого имени
         private string _phone = string.Empty; //приватное поле для временного вводимого телефона
 		private Contact? _selectedContact; //приватное поле для хранения выбранного в датагрид контакта
+        private readonly IDialogService _dialogService;
 
         //свойство для привязки к текстбокс имени
         public string Name
@@ -44,18 +46,27 @@ namespace PhoneBook.VIewModels
         public ICommand DeleteCommand { get; }
 
 		//конструктор инициализирует коллекцию и команды
-		public MainViewModel()
+		// Constructor Injection: DI-контейнер автоматически
+		// передаёт реализацию IDialogService
+		public MainViewModel(IDialogService dialogService)
         {
             Contacts = new ObservableCollection<Contact>();
             AddCommand = new RelayCommand(AddContact, () => CanAddContact()); //создание команды добавления с методом выполнения и проверкой возможности
             DeleteCommand = new RelayCommand(DeleteContact, () => CanDeleteContact());
+            _dialogService = dialogService;
         }
 
 		//метод выполнения команды добавления контакта
 		private void AddContact()
         {
+            if (Contacts.Any(c => c.Phone == _phone))
+            {
+                _dialogService.ShowWarning("Контакт с таким номером уже существует!");
+                return;
+            }
             Contact contact = new Contact(Name, Phone);
             Contacts.Add(contact);
+            _dialogService.ShowInfo("Номер телефона успешно добавлен!");
             Name = string.Empty;
             Phone = string.Empty;
         }
@@ -71,7 +82,16 @@ namespace PhoneBook.VIewModels
         {
             if (SelectedContact != null)
             {
-                Contacts.Remove(SelectedContact);
+                bool result = _dialogService.ShowYesOrNo("Вы уверены, что хотите удалить этот контакт?");
+                if (result) 
+                {
+					Contacts.Remove(SelectedContact);
+				}
+                else
+                {
+                    return;
+                }
+				
             }
         }
 
