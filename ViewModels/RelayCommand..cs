@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace PhoneBook.VIewModels
+namespace PhoneBook.ViewModels
 {
     public class RelayCommand(Action execute,
 Func<bool>? canExecute = null) : ICommand

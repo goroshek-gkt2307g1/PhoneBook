@@ -1,47 +1,44 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using PhoneBook.Services;
-using PhoneBook.VIewModels;
-using System.Configuration;
-using System.Data;
+using PhoneBook.ViewModels;
+using PhoneBook.Views;
 using System.Windows;
 
 namespace PhoneBook
 {
-	/// <summary>
-	/// Interaction logic for App.xaml
-	/// </summary>
 	public partial class App : Application
 	{
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
 
-			//создание коллекции сервисов
 			var services = new ServiceCollection();
 
-			//регистрация сервисов
-			//DialogService - singleton, не хранит состояние пользователя
+			//регистрация сервисов (Singleton - один экземпляр на всё приложение)
+			services.AddSingleton<INavigationService, NavigationService>();
 			services.AddSingleton<IDialogService, DialogService>();
+			services.AddSingleton<ContactsListViewModel>();
 
-			//vm - transient (при навигации нужны будут новые экземпляры)
-			services.AddTransient<MainViewModel>();
+			//регистрация ViewModels (Transient - новый экземпляр при каждом запросе)
+			services.AddTransient<AboutViewModel>();
+			services.AddTransient<ContactEditViewModel>();
 
-			//главное окно - синглтон с явной передачей датаконтекст через лямбда-выражение
+			//регистрация MainWindowViewModel как Singleton
+			services.AddSingleton<MainWindowViewModel>();
+
+			//регистрация MainWindow
 			services.AddSingleton<MainWindow>(sp =>
 			{
 				var window = new MainWindow();
-				window.DataContext = sp.GetRequiredService<MainViewModel>();
+				window.DataContext = sp.GetRequiredService<MainWindowViewModel>();
 				return window;
 			});
 
-			//создаем контейнер (ServiceProvider)
-			var serviceProvider =
-			services.BuildServiceProvider();
-			//получаем главное окно и запускаем его
-			var mainWindow =
-			serviceProvider.GetRequiredService<MainWindow>();
+			var sp = services.BuildServiceProvider();
+
+			//показываем главное окно
+			var mainWindow = sp.GetRequiredService<MainWindow>();
 			mainWindow.Show();
 		}
 	}
-
 }
