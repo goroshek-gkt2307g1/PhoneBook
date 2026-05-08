@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using PhoneBook.Services;
 using PhoneBook.ViewModels;
-using PhoneBook.Views;
 using System.Windows;
 
 namespace PhoneBook
 {
-	public partial class App : Application
+    public partial class App : Application
 	{
 		protected override void OnStartup(StartupEventArgs e)
 		{
