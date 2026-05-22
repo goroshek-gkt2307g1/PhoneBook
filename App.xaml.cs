@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PhoneBook.Entities;
 using PhoneBook.Services;
 using PhoneBook.ViewModels;
 using System.Windows;
@@ -12,6 +14,10 @@ namespace PhoneBook
 			base.OnStartup(e);
 
 			var services = new ServiceCollection();
+
+			services.AddDbContext<PhoneBookDbVlasova2307g1Context>(options =>
+				options.UseSqlServer(
+				"Data Source=DESKTOP-E3J5VUQ;Initial Catalog=PhoneBookDB_Vlasova_2307g1;Integrated Security=True;Trust Server Certificate=True"));
 
 			//регистрация сервисов (Singleton - один экземпляр на всё приложение)
 			services.AddSingleton<INavigationService, NavigationService>();

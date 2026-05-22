@@ -1,4 +1,5 @@
-﻿using PhoneBook.Models;
+﻿using PhoneBook.Entities;
+using PhoneBook.Models;
 using PhoneBook.Services;
 using PhoneBook.ViewModels;
 using System;
@@ -15,12 +16,13 @@ namespace PhoneBook.ViewModels
 	public class ContactsListViewModel : ObservableObject
 	{
 		//коллекция контактов
-		public ObservableCollection<Contact> Contacts { get; }
+		public ObservableCollection<Models.Contact> Contacts { get; set; }
 		private string _name = string.Empty; //приватное поле для временного вводимого имени
 		private string _phone = string.Empty; //приватное поле для временного вводимого телефона
-		private Contact? _selectedContact; //приватное поле для хранения выбранного в датагрид контакта
+		private Models.Contact? _selectedContact; //приватное поле для хранения выбранного в датагрид контакта
 		private readonly IDialogService _dialogService;
 		private readonly INavigationService _navigation;
+		private readonly PhoneBookDbVlasova2307g1Context _context;
 
 		//свойство для привязки к текстбокс имени
 		public string Name
@@ -37,7 +39,7 @@ namespace PhoneBook.ViewModels
 		}
 
 		//свойство для привязки выбранного объекта в датагрид
-		public Contact? SelectedContact
+		public Models.Contact? SelectedContact
 		{
 			get => _selectedContact;
 			set => Set(ref _selectedContact, value);
@@ -51,9 +53,13 @@ namespace PhoneBook.ViewModels
 		//конструктор инициализирует коллекцию и команды
 		// Constructor Injection: DI-контейнер автоматически
 		// передаёт реализацию IDialogService
-		public ContactsListViewModel(IDialogService dialogService, INavigationService navigation)
+		public ContactsListViewModel(IDialogService dialogService, INavigationService navigation, PhoneBookDbVlasova2307g1Context context)
 		{
-			Contacts = new ObservableCollection<Contact>();
+			_context = context;
+			var contactsFromDb = _context.Contacts
+				.Select(c => new Models.Contact(c.Name, c.Phone)) //используем существующий конструктор
+				.ToList();
+			Contacts = new ObservableCollection<Models.Contact>(contactsFromDb);
 
 			AddCommand = new RelayCommand(AddContact, () => CanAddContact());
 			DeleteCommand = new RelayCommand(DeleteContact, () => CanDeleteContact());
@@ -71,8 +77,22 @@ namespace PhoneBook.ViewModels
 				_dialogService.ShowWarning("Контакт с таким номером уже существует!");
 				return;
 			}
-			Contact contact = new Contact(Name, Phone);
+
+			//создаём Model (с валидацией)
+			Models.Contact contact = new Models.Contact(Name, Phone);
+
+			//маппим в Entity и сохраняем в БД
+			var entityContact = new Entities.Contact
+			{
+				Name = contact.Name,
+				Phone = contact.Phone
+			};
+			_context.Contacts.Add(entityContact);
+			_context.SaveChanges();
+
+			//добавляем Model в коллекцию
 			Contacts.Add(contact);
+
 			_dialogService.ShowInfo("Номер телефона успешно добавлен!");
 			Name = string.Empty;
 			Phone = string.Empty;
@@ -81,7 +101,7 @@ namespace PhoneBook.ViewModels
 		//метод проверки возможности добавления контакта
 		private bool CanAddContact()
 		{
-			return Contact.IsValid(Name, Phone);
+			return Models.Contact.IsValid(Name, Phone);
 		}
 
 		//метод выполнения команды удаления контакта
@@ -92,6 +112,16 @@ namespace PhoneBook.ViewModels
 				bool result = _dialogService.ShowYesOrNo("Вы уверены, что хотите удалить этот контакт?");
 				if (result)
 				{
+					//находим Entity
+					var entityToDelete = _context.Contacts
+						.FirstOrDefault(c => c.Phone == SelectedContact.Phone);
+
+					if (entityToDelete != null)
+					{
+						_context.Contacts.Remove(entityToDelete);
+						_context.SaveChanges();
+					}
+
 					Contacts.Remove(SelectedContact);
 				}
 			}
