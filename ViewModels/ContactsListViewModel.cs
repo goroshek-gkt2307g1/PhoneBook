@@ -87,16 +87,25 @@ namespace PhoneBook.ViewModels
 				Name = contact.Name,
 				Phone = contact.Phone
 			};
-			_context.Contacts.Add(entityContact);
-			_context.SaveChanges();
 
-			//добавляем Model в коллекцию
-			Contacts.Add(contact);
+			try
+			{
+				_context.Contacts.Add(entityContact);
+				_context.SaveChanges();
+				//добавляем Model в коллекцию
+				Contacts.Add(contact);
 
-			_dialogService.ShowInfo("Номер телефона успешно добавлен!");
-			Name = string.Empty;
-			Phone = string.Empty;
+				_dialogService.ShowInfo("Номер телефона успешно добавлен!");
+				Name = string.Empty;
+				Phone = string.Empty;
+			}
+			catch (Exception ex) 
+			{ 
+				_dialogService.ShowError(ex.Message);
+			}
+
 		}
+
 
 		//метод проверки возможности добавления контакта
 		private bool CanAddContact()
@@ -118,11 +127,18 @@ namespace PhoneBook.ViewModels
 
 					if (entityToDelete != null)
 					{
-						_context.Contacts.Remove(entityToDelete);
-						_context.SaveChanges();
+						try
+						{
+							_context.Contacts.Remove(entityToDelete);
+							_context.SaveChanges();
+							Contacts.Remove(SelectedContact);
+						}
+						catch (Exception ex)
+						{
+							_dialogService.ShowError(ex.Message);
+						}
 					}
 
-					Contacts.Remove(SelectedContact);
 				}
 			}
 		}

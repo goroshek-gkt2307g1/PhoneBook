@@ -1,4 +1,5 @@
-﻿using PhoneBook.Models;
+﻿using PhoneBook.Entities;
+using PhoneBook.Models;
 using PhoneBook.Services;
 using System.Windows.Input;
 
@@ -8,12 +9,15 @@ namespace PhoneBook.ViewModels
 	{
 		private readonly INavigationService _navigation;
 		private readonly IDialogService _dialogService;
-		private Contact _originalContact = null!;
+		private Models.Contact _originalContact = null!;
 		private string _editName = string.Empty;
 		private string _editPhone = string.Empty;
+		private readonly PhoneBookDbVlasova2307g1Context _context;
 
-		public ContactEditViewModel(INavigationService navigation, IDialogService dialogService)
+
+		public ContactEditViewModel(INavigationService navigation, IDialogService dialogService, PhoneBookDbVlasova2307g1Context context)
 		{
+			_context = context;
 			_navigation = navigation;
 			_dialogService = dialogService;
 
@@ -46,7 +50,7 @@ namespace PhoneBook.ViewModels
 
 		public void OnNavigatedTo(object? parameter)
 		{
-			if (parameter is Contact contactToEdit)
+			if (parameter is Models.Contact contactToEdit)
 			{
 				//сохраняем ссылку на оригинальный контакт
 				_originalContact = contactToEdit;
@@ -59,21 +63,35 @@ namespace PhoneBook.ViewModels
 
 		private void SaveContact()
 		{
+
 			if (_originalContact != null)
 			{
-				//обновляем свойства существующего контакта
-				_originalContact.Name = EditName;
-				_originalContact.Phone = EditPhone;
+				var entityToUpdate = _context.Contacts
+					.FirstOrDefault(c => c.Phone == _originalContact.Phone);
 
-				_dialogService.ShowInfo("Контакт успешно обновлен!");
+				if (entityToUpdate != null)
+				{
+					try
+					{
+						//обновляем свойства существующего контакта
+						entityToUpdate.Name = EditName;
+						entityToUpdate.Phone = EditPhone;
+						_context.SaveChanges();
+						_dialogService.ShowInfo("Контакт успешно обновлен!");
+						_navigation.NavigateTo<ContactsListViewModel>();	
+					}
+					catch(Exception ex)
+					{
+						_dialogService.ShowError(ex.Message)
+	;				}
+				}
 			}
 
-			_navigation.NavigateTo<ContactsListViewModel>();
 		}
 
 		private bool CanSaveContact()
 		{
-			return Contact.IsValid(EditName, EditPhone);
+			return Models.Contact.IsValid(EditName, EditPhone);
 		}
 
 		private void CancelEdit()
