@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Xml.Linq;
-using PhoneBook.VIewModels;
+using PhoneBook.ViewModels;
 
 namespace PhoneBook.Models
 {
